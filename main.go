@@ -1,7 +1,10 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -19,10 +22,22 @@ type ResultCurrency struct {
 	ExchangeRate float64 `json:"exchange_rate"`
 }
 
+type ExchangeRate struct {
+	Response Response `json:"response"`
+}
+
+type Response struct {
+	Rates Rates `json:"rates"`
+}
+
+type Rates struct {
+	USD float64 `json:"USD"`
+}
+
 func exchangingCurrency(c *gin.Context) {
 	var tc TargetCurrency
 	var rc ResultCurrency
-	rate := 0.74188
+	rate := getExchangeRate()
 
 	if err := c.BindJSON(&tc); err != nil {
 		return
@@ -35,6 +50,26 @@ func exchangingCurrency(c *gin.Context) {
 	rc.ExchangeRate = rate
 
 	c.IndentedJSON(http.StatusCreated, rc)
+}
+
+func getExchangeRate() float64 {
+	// TODO: Get API key from the Environment Variables
+	apiURL := "https://api.currencyscoop.com/v1/latest?base=BND&symbols=USD&api_key=[INSERT API KEY HERE]"
+
+	res, err := http.Get(apiURL)
+	if err != nil {
+		fmt.Print(err.Error())
+	}
+
+	resData, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var resObj ExchangeRate
+	json.Unmarshal(resData, &resObj)
+
+	return resObj.Response.Rates.USD
 }
 
 func main() {
