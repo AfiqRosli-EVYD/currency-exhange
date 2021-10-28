@@ -6,8 +6,10 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 )
 
 type TargetCurrency struct {
@@ -54,7 +56,13 @@ func exchangingCurrency(c *gin.Context) {
 
 func getExchangeRate() float64 {
 	// TODO: Get API key from the Environment Variables
-	apiURL := "https://api.currencyscoop.com/v1/latest?base=BND&symbols=USD&api_key=[INSERT API KEY HERE]"
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
+	currencyScoopAPIKey := os.Getenv("CURRENCY_SCOOP_API")
+	apiURL := "https://api.currencyscoop.com/v1/latest?base=BND&symbols=USD&api_key=" + currencyScoopAPIKey
 
 	res, err := http.Get(apiURL)
 	if err != nil {
