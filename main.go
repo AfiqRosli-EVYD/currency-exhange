@@ -1,28 +1,40 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
 
-type ExchangeCurrency struct {
-	FromCurrency string  `json:"fromCurrency"`
-	ToCurrency   string  `json:"toCurrency"`
+type TargetCurrency struct {
+	FromCurrency string  `json:"from_currency"`
+	ToCurrency   string  `json:"to_currency"`
 	Amount       float64 `json:"amount"`
 }
 
-func exchangingCurrency(c *gin.Context) {
-	var ec ExchangeCurrency
-	rate := 0.74
+type ResultCurrency struct {
+	Currency     string  `json:"currency"`
+	Amount       string  `json:"amount"`
+	ExchangeRate float64 `json:"exchange_rate"`
+}
 
-	if err := c.BindJSON(&ec); err != nil {
+func exchangingCurrency(c *gin.Context) {
+	var tc TargetCurrency
+	var rc ResultCurrency
+	rate := 0.74188
+
+	if err := c.BindJSON(&tc); err != nil {
 		return
 	}
 
-	exchangedTotal := ec.Amount * rate
+	exchangedTotal := tc.Amount * rate
 
-	c.IndentedJSON(http.StatusCreated, exchangedTotal)
+	rc.Currency = tc.ToCurrency
+	rc.Amount = fmt.Sprintf("%.2f", exchangedTotal)
+	rc.ExchangeRate = rate
+
+	c.IndentedJSON(http.StatusCreated, rc)
 }
 
 func main() {
