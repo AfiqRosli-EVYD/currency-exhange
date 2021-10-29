@@ -16,4 +16,9 @@ curl http://localhost:8080/currency_exchange \
 5) To stop the server, enter `CTRL + C` in the first terminal
 
 ### Note
-The `amount` field in the POST request data can be changed to any non-negative numbers
+The POST request data can have different value at these fields:
+- `amount`: non-negative numbers
+- `from_currency`: Any [supported currencies][1] by the 3rd-party API
+- `to_currency`: BND, SGD, or USD
+
+[1]: https://currencyscoop.com/supported-currencies
