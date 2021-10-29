@@ -55,7 +55,6 @@ func exchangingCurrency(c *gin.Context) {
 }
 
 func getExchangeRate() float64 {
-	// TODO: Get API key from the Environment Variables
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("Error loading .env file")
