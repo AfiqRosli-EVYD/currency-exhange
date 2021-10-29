@@ -43,14 +43,14 @@ type ErrorMessage struct {
 }
 
 func exchangingCurrency(c *gin.Context) {
-	var tc TargetCurrency
-	var rc ResultCurrency
+	var targetCurrency TargetCurrency
+	var resultCurrency ResultCurrency
 
-	if err := c.BindJSON(&tc); err != nil {
+	if err := c.BindJSON(&targetCurrency); err != nil {
 		return
 	}
 
-	if !isSupportedExchangeCurrency(tc.ToCurrency) {
+	if !isSupportedExchangeCurrency(targetCurrency.ToCurrency) {
 		var em ErrorMessage
 		em.Message = "Supported currencies are BND, SGD, USD"
 
@@ -59,14 +59,14 @@ func exchangingCurrency(c *gin.Context) {
 		return
 	}
 
-	rate := getExchangeRate(tc.FromCurrency, tc.ToCurrency)
-	exchangedTotal := tc.Amount * rate
+	rate := getExchangeRate(targetCurrency.FromCurrency, targetCurrency.ToCurrency)
+	exchangedTotal := targetCurrency.Amount * rate
 
-	rc.Currency = tc.ToCurrency
-	rc.Amount = fmt.Sprintf("%.2f", exchangedTotal)
-	rc.ExchangeRate = rate
+	resultCurrency.Currency = targetCurrency.ToCurrency
+	resultCurrency.Amount = fmt.Sprintf("%.2f", exchangedTotal)
+	resultCurrency.ExchangeRate = rate
 
-	c.IndentedJSON(http.StatusCreated, rc)
+	c.IndentedJSON(http.StatusCreated, resultCurrency)
 }
 
 func getExchangeRate(from string, to string) float64 {
