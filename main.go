@@ -33,18 +33,33 @@ type Response struct {
 }
 
 type Rates struct {
+	BND float64 `json:"BND"`
+	SGD float64 `json:"SGD"`
 	USD float64 `json:"USD"`
+}
+
+type ErrorMessage struct {
+	Message string `json:"message"`
 }
 
 func exchangingCurrency(c *gin.Context) {
 	var tc TargetCurrency
 	var rc ResultCurrency
-	rate := getExchangeRate()
 
 	if err := c.BindJSON(&tc); err != nil {
 		return
 	}
 
+	if !isSupportedExchangeCurrency(tc.ToCurrency) {
+		var em ErrorMessage
+		em.Message = "Supported currencies are BND, SGD, USD"
+
+		c.IndentedJSON(http.StatusForbidden, em)
+
+		return
+	}
+
+	rate := getExchangeRate(tc.FromCurrency, tc.ToCurrency)
 	exchangedTotal := tc.Amount * rate
 
 	rc.Currency = tc.ToCurrency
@@ -54,14 +69,14 @@ func exchangingCurrency(c *gin.Context) {
 	c.IndentedJSON(http.StatusCreated, rc)
 }
 
-func getExchangeRate() float64 {
+func getExchangeRate(from string, to string) float64 {
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
 
 	currencyScoopAPIKey := os.Getenv("CURRENCY_SCOOP_API")
-	apiURL := "https://api.currencyscoop.com/v1/latest?base=BND&symbols=USD&api_key=" + currencyScoopAPIKey
+	apiURL := fmt.Sprintf("https://api.currencyscoop.com/v1/latest?base=%s&symbols=%s&api_key=%s", from, to, currencyScoopAPIKey)
 
 	res, err := http.Get(apiURL)
 	if err != nil {
@@ -76,7 +91,25 @@ func getExchangeRate() float64 {
 	var resObj ExchangeRate
 	json.Unmarshal(resData, &resObj)
 
-	return resObj.Response.Rates.USD
+	if to == "BND" {
+		return resObj.Response.Rates.BND
+	} else if to == "SGD" {
+		return resObj.Response.Rates.SGD
+	} else {
+		return resObj.Response.Rates.USD
+	}
+}
+
+func isSupportedExchangeCurrency(to string) bool {
+	currencies := [3]string{"BND", "SGD", "USD"}
+
+	for _, currency := range currencies {
+		if currency == to {
+			return true
+		}
+	}
+
+	return false
 }
 
 func main() {
